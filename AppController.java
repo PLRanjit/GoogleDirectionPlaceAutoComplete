@@ -1,4 +1,4 @@
-package com.itshareplus.googlemapdemo;
+package com.example.googleapis;
 
 import android.app.Application;
 import android.support.multidex.MultiDexApplication;
