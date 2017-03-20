@@ -72,7 +72,7 @@ import Modules.DirectionFinder;
 import Modules.DirectionFinderListener;
 import Modules.Route;
 
-import static com.itshareplus.googlemapdemo.AppConfig.*;
+import static com.examples.googleapis.AppConfig.*;
 
 public class MapsActivity extends AppCompatActivity implements
         OnMapReadyCallback,
