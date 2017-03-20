@@ -1,4 +1,4 @@
-package com.example.googleapis;
+package com.examples.googleapis;
 
 import android.app.Application;
 import android.support.multidex.MultiDexApplication;
