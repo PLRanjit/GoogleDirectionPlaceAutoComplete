@@ -1,4 +1,4 @@
-package com.itshareplus.googlemapdemo;
+package com.example.googleapis;
 
 public final class AppConfig {
 
