@@ -1,4 +1,4 @@
-package com.example.googleapis;
+package com.examples.googleapis;
 
 public final class AppConfig {
 
