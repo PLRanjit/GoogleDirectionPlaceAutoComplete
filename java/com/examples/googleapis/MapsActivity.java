@@ -49,6 +49,7 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 import com.sothree.slidinguppanel.SlidingUpPanelLayout;
+
 import android.support.design.widget.Snackbar;
 
 import org.json.JSONArray;
@@ -72,13 +73,15 @@ import Modules.DirectionFinder;
 import Modules.DirectionFinderListener;
 import Modules.Route;
 
+import android.os.Bundle;
+
 import static com.examples.googleapis.AppConfig.*;
 
-public class MapsActivity extends AppCompatActivity implements
+public class MapsActivity extends AbsRuntimePermission implements
         OnMapReadyCallback,
         DirectionFinderListener,
         LocationListener,
-        android.location.LocationListener{              //AppCompatActivity
+        android.location.LocationListener {              //AppCompatActivity
 
     private GoogleMap mMap;
     private LocationManager locationManager;
@@ -108,11 +111,18 @@ public class MapsActivity extends AppCompatActivity implements
     private static final String API_KEY = "AIzaSyBHaBZN94wLAP8Xo1PFNyc1pR079F1YRK4";
 
     private boolean flag = false;
-
-
+    private static final int REQUEST_PERMISSION = 10;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        requestAppPermissions(new String[]{
+                        Manifest.permission.INTERNET,
+                        Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                        Manifest.permission.ACCESS_COARSE_LOCATION,
+                        Manifest.permission.ACCESS_FINE_LOCATION,
+                        Manifest.permission.ACCESS_NETWORK_STATE},
+                R.string.msg,REQUEST_PERMISSION);
 
         if (!isGooglePlayServicesAvailable()) {
             finish();
@@ -128,8 +138,20 @@ public class MapsActivity extends AppCompatActivity implements
             showLocationSettings();
         }
         init();
-        setListView();
+        try{
+            setListView();
+        }catch (Exception e){
+            Toast.makeText(this, "Slow net", Toast.LENGTH_SHORT).show();
+        }
+
         panelListener();
+
+    }
+
+    @Override
+    public void onPermissionsGranted(int requestCode) {
+        //Do anything when permisson granted
+        Toast.makeText(getApplicationContext(), "Permission granted", Toast.LENGTH_LONG).show();
 
     }
 
@@ -156,8 +178,9 @@ public class MapsActivity extends AppCompatActivity implements
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
 
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
-                ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
+                && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            Toast.makeText(getBaseContext(), "Grant location and Storage permission", Toast.LENGTH_LONG).show();
             return;
         }
         mMap.setMyLocationEnabled(true);
@@ -207,8 +230,12 @@ public class MapsActivity extends AppCompatActivity implements
             LatLngBounds.Builder builder = new LatLngBounds.Builder();
             builder.include(route.startLocation);
             builder.include(route.endLocation);
-            mMap.animateCamera(CameraUpdateFactory.newLatLngBounds(builder.build(),
-                    (int) (getResources().getDisplayMetrics().widthPixels * 0.10)));
+            try{
+                mMap.moveCamera(CameraUpdateFactory.newLatLngBounds(builder.build(),
+                (int) (getResources().getDisplayMetrics().widthPixels * 0.10)));
+            }catch (Exception e){
+                Toast.makeText(getBaseContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
+            }
 
             originMarkers.add(mMap.addMarker(new MarkerOptions()
                     .icon(BitmapDescriptorFactory.fromResource(R.drawable.start_blue))
@@ -507,17 +534,19 @@ public class MapsActivity extends AppCompatActivity implements
                     markerOptions.title(placeName + " : " + vicinity);
                     s.add("\n"+placeName + ",\n" + vicinity+"\n");
                     mMap.addMarker(markerOptions);
-                    latlng_list.add(latLng);
+                   latlng_list.add(latLng);
 
                 }
-                setListView();
+                try{
+                    setListView();
+                }catch (Exception e){
+                    Toast.makeText(this, "Slow net", Toast.LENGTH_SHORT).show();
+                }
                 Toast.makeText(getBaseContext(), selectedItem+"!",
                         Toast.LENGTH_LONG).show();
                 try {
                     getMarkerZoom();
                 }catch (Exception e){
-                    Toast.makeText(getBaseContext(), latlng_list.size()+"--"+e.getMessage(),
-                            Toast.LENGTH_LONG).show();
                 }
                 s = new ArrayList<String>();
             } else if (result.getString(STATUS).equalsIgnoreCase(ZERO_RESULTS)) {
@@ -538,7 +567,7 @@ public class MapsActivity extends AppCompatActivity implements
             builder.include(marker);
         }
         LatLngBounds bounds = builder.build();
-        mMap.animateCamera(CameraUpdateFactory.newLatLngBounds(bounds, (int) (getResources().getDisplayMetrics().widthPixels * 0.10)));
+        mMap.moveCamera(CameraUpdateFactory.newLatLngBounds(bounds, (int) (getResources().getDisplayMetrics().widthPixels * 0.10)));
     }
 
 
