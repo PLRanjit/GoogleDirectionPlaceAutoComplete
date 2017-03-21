@@ -18,8 +18,10 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
-    repositories {
-        maven { url 'http://repo1.maven.org/maven2' }
+     dexOptions {
+        javaMaxHeapSize "4g"
+    }
+    productFlavors {
     }
 }
 
