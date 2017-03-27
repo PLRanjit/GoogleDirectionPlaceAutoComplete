@@ -11,9 +11,13 @@ import android.location.Criteria;
 import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationManager;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.provider.Settings;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
 import android.os.Bundle;
+import android.app.ActionBar.LayoutParams;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
@@ -26,6 +30,7 @@ import android.widget.Filter;
 import android.widget.Filterable;
 import android.widget.LinearLayout;
 import android.widget.ListView;
+import android.widget.ScrollView;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -48,6 +53,7 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
+import com.itshareplus.googlemapdemo.GPSTracker.GPSTracker;
 import com.sothree.slidinguppanel.SlidingUpPanelLayout;
 
 import android.support.design.widget.Snackbar;
@@ -101,6 +107,7 @@ public class MapsActivity extends AbsRuntimePermission implements
     private List<LatLng> latlng_list;
     private ListView listView;
     private Geocoder gc;
+    private FloatingActionButton direct;
     private static Location l;
     private static List<String> s = Arrays.asList("a");
     private static final String LOG_TAG = "Google Places Autocompl";
@@ -112,6 +119,9 @@ public class MapsActivity extends AbsRuntimePermission implements
 
     private boolean flag = false;
     private static final int REQUEST_PERMISSION = 10;
+
+    private boolean loadnear = false;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -122,11 +132,17 @@ public class MapsActivity extends AbsRuntimePermission implements
                         Manifest.permission.ACCESS_COARSE_LOCATION,
                         Manifest.permission.ACCESS_FINE_LOCATION,
                         Manifest.permission.ACCESS_NETWORK_STATE},
-                R.string.msg,REQUEST_PERMISSION);
+                R.string.msg, REQUEST_PERMISSION);
 
         if (!isGooglePlayServicesAvailable()) {
             finish();
         }
+
+        if (!isInternetAvailable()) {
+            Toast.makeText(this, "Please! Connect to internet", Toast.LENGTH_LONG).show();
+        }
+
+
         setContentView(R.layout.activity_maps);
 
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
@@ -137,10 +153,11 @@ public class MapsActivity extends AbsRuntimePermission implements
         if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
             showLocationSettings();
         }
+
         init();
-        try{
+        try {
             setListView();
-        }catch (Exception e){
+        } catch (Exception e) {
             Toast.makeText(this, "Slow net", Toast.LENGTH_SHORT).show();
         }
 
@@ -149,9 +166,25 @@ public class MapsActivity extends AbsRuntimePermission implements
     }
 
     @Override
+    protected void onStart() {
+        super.onStart();
+        if (!isInternetAvailable()) {
+            Toast.makeText(this, "Please! Connect to internet", Toast.LENGTH_LONG).show();
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (!isInternetAvailable()) {
+            Toast.makeText(this, "Please! Connect to internet", Toast.LENGTH_LONG).show();
+        }
+    }
+
+    @Override
     public void onPermissionsGranted(int requestCode) {
         //Do anything when permisson granted
-        Toast.makeText(getApplicationContext(), "Permission granted", Toast.LENGTH_LONG).show();
+        //Toast.makeText(getApplicationContext(), "Permission granted", Toast.LENGTH_LONG).show();
 
     }
 
@@ -185,7 +218,7 @@ public class MapsActivity extends AbsRuntimePermission implements
         }
         mMap.setMyLocationEnabled(true);
         mMap.getUiSettings().setCompassEnabled(true);
-        mMap.getUiSettings().setZoomControlsEnabled(true);
+        // mMap.getUiSettings().setZoomControlsEnabled(true);
 
         showCurrentLocation();
     }
@@ -230,19 +263,19 @@ public class MapsActivity extends AbsRuntimePermission implements
             LatLngBounds.Builder builder = new LatLngBounds.Builder();
             builder.include(route.startLocation);
             builder.include(route.endLocation);
-            try{
+            try {
                 mMap.moveCamera(CameraUpdateFactory.newLatLngBounds(builder.build(),
-                (int) (getResources().getDisplayMetrics().widthPixels * 0.10)));
-            }catch (Exception e){
+                        (int) (getResources().getDisplayMetrics().widthPixels * 0.10)));
+            } catch (Exception e) {
                 Toast.makeText(getBaseContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
             }
 
             originMarkers.add(mMap.addMarker(new MarkerOptions()
-                    .icon(BitmapDescriptorFactory.fromResource(R.drawable.start_blue))
+                    .icon(BitmapDescriptorFactory.fromResource(R.drawable.start_l))
                     .title(route.startAddress)
                     .position(route.startLocation)));
             destinationMarkers.add(mMap.addMarker(new MarkerOptions()
-                    .icon(BitmapDescriptorFactory.fromResource(R.drawable.end_green))
+                    .icon(BitmapDescriptorFactory.fromResource(R.drawable.end_l))
                     .title(route.endAddress)
                     .position(route.endLocation)));
 
@@ -275,15 +308,18 @@ public class MapsActivity extends AbsRuntimePermission implements
 
     @Override
     public void onLocationChanged(Location location) {
+
+        Toast.makeText(getBaseContext(),"on location changed",Toast.LENGTH_LONG);
         double latitude = location.getLatitude();
         double longitude = location.getLongitude();
         LatLng latLng = new LatLng(latitude, longitude);
-        mMap.addMarker(new MarkerOptions().position(latLng));
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
-        mMap.animateCamera(CameraUpdateFactory.zoomTo(15));
 
         String ll = "Latitude:" + latitude + ", Longitude:" + longitude;
-        loadNearByPlaces(latitude, longitude);
+        if(loadnear){
+            loadNearByPlaces(latitude, longitude);
+            loadnear = false;
+        }
+
         l = location;
     }
 
@@ -305,12 +341,19 @@ public class MapsActivity extends AbsRuntimePermission implements
     private void init() {
         s = new ArrayList<String>();
         latlng_list = new ArrayList<LatLng>();
+
+        direct = (FloatingActionButton) findViewById(R.id.direct);
+
         spinner = (Spinner) findViewById(R.id.placeSpinner);
         mPlane = (SlidingUpPanelLayout) findViewById(R.id.sliding_layout);
         listView = (ListView) findViewById(R.id.list_view);
         btnFindPath = (Button) findViewById(R.id.btnFindPath);
         etOrigin = (AutoCompleteTextView) findViewById(R.id.etOrigin);
         etDestination = (AutoCompleteTextView) findViewById(R.id.etDestination);
+
+        etOrigin.setVisibility(View.GONE);
+        etDestination.setVisibility(View.GONE);
+        btnFindPath.setVisibility(View.GONE);
 
         arrayAdapter = new ArrayAdapter<String>
                 (MapsActivity.this, android.R.layout.simple_list_item_1, getResources().getStringArray(R.array.names));
@@ -321,7 +364,15 @@ public class MapsActivity extends AbsRuntimePermission implements
             @Override
             public void onClick(View v) {
                 mMap.clear();
+                invisible();
                 sendRequest();
+            }
+        });
+
+        direct.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                invisible();
             }
         });
 
@@ -344,19 +395,35 @@ public class MapsActivity extends AbsRuntimePermission implements
         });
 
         spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-          @Override
-          public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-              selectedItem = parent.getItemAtPosition(position).toString();
-              showCurrentLocation();
-             // Toast.makeText(getBaseContext(), selectedItem, Toast.LENGTH_SHORT).show();
-          }
+                                              @Override
+                                              public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                                                  selectedItem = parent.getItemAtPosition(position).toString();
+                                                  showCurrentLocation();
+                                                  // Toast.makeText(getBaseContext(), selectedItem, Toast.LENGTH_SHORT).show();
+                                              }
 
-          @Override
-          public void onNothingSelected(AdapterView<?> parent) {
+                                              @Override
+                                              public void onNothingSelected(AdapterView<?> parent) {
 
-          }
-      }
+                                              }
+                                          }
         );
+    }
+
+    private void invisible() {
+        if (etOrigin.getVisibility() == View.GONE && etDestination.getVisibility() == View.GONE && btnFindPath.getVisibility() == View.GONE) {
+
+            etOrigin.setText("");
+            etDestination.setText("");
+
+            etOrigin.setVisibility(View.VISIBLE);
+            etDestination.setVisibility(View.VISIBLE);
+            btnFindPath.setVisibility(View.VISIBLE);
+        } else {
+            etOrigin.setVisibility(View.GONE);
+            etDestination.setVisibility(View.GONE);
+            btnFindPath.setVisibility(View.GONE);
+        }
     }
 
     private void setListView() {
@@ -366,7 +433,7 @@ public class MapsActivity extends AbsRuntimePermission implements
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 s = new ArrayList<String>();
-                etDestination.setText(parent.getItemAtPosition(position).toString().replaceAll("\n",""));
+                etDestination.setText(parent.getItemAtPosition(position).toString().replaceAll("\n", ""));
                 try {
                     getCity(l);
                 } catch (IOException e) {
@@ -378,10 +445,10 @@ public class MapsActivity extends AbsRuntimePermission implements
                         (mPlane.getPanelState() == SlidingUpPanelLayout.PanelState.EXPANDED || mPlane.getPanelState() == SlidingUpPanelLayout.PanelState.ANCHORED)) {
                     mPlane.setPanelState(SlidingUpPanelLayout.PanelState.COLLAPSED);
                     flag = true;
-                }else{
+                } else {
                     flag = false;
                 }
-                if(flag){
+                if (flag) {
                     mMap.clear();
                     sendRequest();
                 }
@@ -426,6 +493,9 @@ public class MapsActivity extends AbsRuntimePermission implements
     }
 
     private void showCurrentLocation() {
+
+        Toast.makeText(getBaseContext(),"show current location",Toast.LENGTH_LONG);
+        loadnear = true;
         Criteria criteria = new Criteria();
         String bestProvider = locationManager.getBestProvider(criteria, true);
         if (ActivityCompat.checkSelfPermission(this,
@@ -434,8 +504,8 @@ public class MapsActivity extends AbsRuntimePermission implements
                         != PackageManager.PERMISSION_GRANTED) {
             return;
         }
-        Location location = locationManager.getLastKnownLocation(bestProvider);
-
+        Location location = getLocation();
+        s = new ArrayList<String>();
         if (location != null) {
             onLocationChanged(location);
         }
@@ -448,7 +518,8 @@ public class MapsActivity extends AbsRuntimePermission implements
                 .make(mainCoordinatorLayout, "Location Error: GPS Disabled!",
                         Snackbar.LENGTH_LONG)
                 .setAction("Enable", new View.OnClickListener() {
-                    @Override                    public void onClick(View v) {
+                    @Override
+                    public void onClick(View v) {
 
                         startActivity(new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS));
                     }
@@ -468,7 +539,7 @@ public class MapsActivity extends AbsRuntimePermission implements
         //YOU Can change this type at your own will, e.g hospital, cafe, restaurant.... and see how it all works
         //String type = "grocery_or_supermarket";
         String type = selectedItem;
-        if(String.valueOf(selectedItem).equals("monuments")){
+        if (String.valueOf(selectedItem).equals("monuments")) {
             type = "museum|amusement_park|aquarium|art_gallery|hindu_temple|mosque";
         }
         StringBuilder googlePlacesUrl =
@@ -489,7 +560,8 @@ public class MapsActivity extends AbsRuntimePermission implements
                     }
                 },
                 new Response.ErrorListener() {
-                    @Override                    public void onErrorResponse(VolleyError error) {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
                         Log.e(TAG, "onErrorResponse: Error= " + error);
                         Log.e(TAG, "onErrorResponse: Error= " + error.getMessage());
                     }
@@ -532,25 +604,26 @@ public class MapsActivity extends AbsRuntimePermission implements
                     LatLng latLng = new LatLng(latitude, longitude);
                     markerOptions.position(latLng);
                     markerOptions.title(placeName + " : " + vicinity);
-                    s.add("\n"+placeName + ",\n" + vicinity+"\n");
+                    s.add("\n" + placeName + ",\n" + vicinity + "\n");
                     mMap.addMarker(markerOptions);
-                   latlng_list.add(latLng);
+                    latlng_list.add(latLng);
 
                 }
-                try{
+                try {
                     setListView();
-                }catch (Exception e){
+                } catch (Exception e) {
                     Toast.makeText(this, "Slow net", Toast.LENGTH_SHORT).show();
                 }
-                Toast.makeText(getBaseContext(), selectedItem+"!",
-                        Toast.LENGTH_LONG).show();
+                Toast.makeText(getBaseContext(), selectedItem + "!",
+                        Toast.LENGTH_SHORT).show();
                 try {
                     getMarkerZoom();
-                }catch (Exception e){
+                } catch (Exception e) {
                 }
                 s = new ArrayList<String>();
+                latlng_list.clear();
             } else if (result.getString(STATUS).equalsIgnoreCase(ZERO_RESULTS)) {
-                Toast.makeText(getBaseContext(), "No "+selectedItem+" found in 5KM radius!!!",
+                Toast.makeText(getBaseContext(), "No " + selectedItem + " found in 5KM radius!!!",
                         Toast.LENGTH_LONG).show();
             }
 
@@ -561,7 +634,7 @@ public class MapsActivity extends AbsRuntimePermission implements
         }
     }
 
-    private void getMarkerZoom(){
+    private void getMarkerZoom() {
         LatLngBounds.Builder builder = new LatLngBounds.Builder();
         for (LatLng marker : latlng_list) {
             builder.include(marker);
@@ -593,7 +666,7 @@ public class MapsActivity extends AbsRuntimePermission implements
                 jsonResults.append(buff, 0, read);
             }
         } catch (MalformedURLException e) {
-            Log.e(LOG_TAG, "Error processing Places API URL",  e);
+            Log.e(LOG_TAG, "Error processing Places API URL", e);
             return resultList;
         } catch (IOException e) {
             Log.e(LOG_TAG, "Error connecting to Places API", e);
@@ -670,17 +743,112 @@ public class MapsActivity extends AbsRuntimePermission implements
         }
     }
 
-    private  void getCity(Location location) throws IOException {
+    private void getCity(Location location) throws IOException {
         gc = new Geocoder(getBaseContext(), Locale.getDefault());
         List<Address> addressList = gc.getFromLocation(location.getLatitude(), location.getLongitude(), 1);
         Address address = addressList.get(0);
 
         ArrayList<String> addressFragments = new ArrayList<String>();
 
-       for(int i = 0; i <= address.getMaxAddressLineIndex(); i++) {
+        for (int i = 0; i <= address.getMaxAddressLineIndex(); i++) {
             addressFragments.add(address.getAddressLine(i));
         }
         String s = addressFragments.toString().trim();
-        etOrigin.setText(s.substring(1, s.length()-1));
+        etOrigin.setText(s.substring(1, s.length() - 1));
+    }
+
+    private boolean isInternetAvailable() {
+        boolean a = false;
+        ConnectivityManager cm = (ConnectivityManager) getBaseContext().getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
+        if (activeNetwork != null) { // connected to the internet
+            if (activeNetwork.getType() == ConnectivityManager.TYPE_WIFI) {
+                // connected to wifi
+                // Toast.makeText(getBaseContext(), activeNetwork.getTypeName(), Toast.LENGTH_SHORT).show();
+                a = true;
+            } else if (activeNetwork.getType() == ConnectivityManager.TYPE_MOBILE) {
+                // connected to the mobile provider's data plan
+                // Toast.makeText(getBaseContext(), activeNetwork.getTypeName(), Toast.LENGTH_SHORT).show();
+                a = true;
+            }
+        } else {
+            a = false;
+            // not connected to the internet
+        }
+        return a;
+    }
+
+    boolean isGPSEnabled = false;
+
+    // flag for network status
+    boolean isNetworkEnabled = false;
+
+    // flag for get location status
+    boolean canGetLocation = false;
+
+    Location location = null; // location
+    double latitude; // latitude
+    double longitude; // longitude
+
+    public Location getLocation() {
+        try {
+            locationManager = (LocationManager) getBaseContext().getSystemService(LOCATION_SERVICE);
+
+            // getting GPS status
+            isGPSEnabled = locationManager
+                    .isProviderEnabled(LocationManager.GPS_PROVIDER);
+
+            // getting network status
+            isNetworkEnabled = locationManager
+                    .isProviderEnabled(LocationManager.NETWORK_PROVIDER);
+
+            if (!isGPSEnabled && !isNetworkEnabled) {
+                // no network provider is enabled
+            } else {
+                this.canGetLocation = true;
+                if (isNetworkEnabled) {
+                    if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
+                            ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                        return null;
+                    }
+                    locationManager.requestLocationUpdates(
+                            LocationManager.NETWORK_PROVIDER,
+                            MIN_TIME_BW_UPDATES,
+                            MIN_DISTANCE_CHANGE_FOR_UPDATES, this);
+                    Log.d("Network", "Network Enabled");
+                    if (locationManager != null) {
+                        location = locationManager
+                                .getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+                        if (location != null) {
+                            latitude = location.getLatitude();
+                            longitude = location.getLongitude();
+                        }
+                    }
+                }
+                // if GPS Enabled get lat/long using GPS Services
+                if (isGPSEnabled) {
+                    if (location == null) {
+                        locationManager.requestLocationUpdates(
+                                LocationManager.GPS_PROVIDER,
+                                MIN_TIME_BW_UPDATES,
+                                MIN_DISTANCE_CHANGE_FOR_UPDATES, this);
+                        Log.d("GPS", "GPS Enabled");
+                        if (locationManager != null) {
+                            location = locationManager
+                                    .getLastKnownLocation(LocationManager.GPS_PROVIDER);
+                            if (location != null) {
+                                latitude = location.getLatitude();
+                                longitude = location.getLongitude();
+                            }
+                        }
+                    }
+                }
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return location;
     }
 }
