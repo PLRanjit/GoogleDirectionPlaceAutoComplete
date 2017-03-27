@@ -3,7 +3,6 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="8dp"
     android:orientation="vertical"
     android:id="@+id/mainCoordinatorLayout"
     tools:context="com.examples.googleapis.MapsActivity">
@@ -22,90 +21,161 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:orientation="vertical">
-        <LinearLayout
-            android:id="@+id/main_panel2"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical">
-            <AutoCompleteTextView
-                android:id="@+id/etOrigin"
-                android:scrollHorizontally="true"
-                android:maxLines="1"
-                android:ellipsize="end"
-                android:layout_weight="1"
+
+            <android.support.v7.widget.CardView xmlns:card_view="http://schemas.android.com/apk/res-auto"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="Enter origin address"
-                android:layout_alignParentTop="true"
-                android:layout_alignParentStart="true" />
-
-            <AutoCompleteTextView
-                android:id="@+id/etDestination"
-                android:scrollHorizontally="true"
-                android:maxLines="1"
-                android:ellipsize="end"
-                android:layout_weight="1"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="Enter destination adrress"
-                android:layout_alignParentTop="true"
-                android:layout_alignParentEnd="true" />
-            </LinearLayout>
-
-            <Spinner
-                android:id="@+id/placeSpinner"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="NearBy" />
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal">
-
-                <Button
-                    android:id="@+id/btnFindPath"
-                    android:layout_width="wrap_content"
+                android:layout_marginTop="5dp"
+                card_view:cardCornerRadius="4dp"
+                card_view:cardElevation="1dp">
+                <RelativeLayout
+                    android:id="@+id/main_panel3"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+                <LinearLayout
+                    android:id="@+id/main_panel2"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Find path" />
+                    android:orientation="vertical"
+                    android:layout_toStartOf="@+id/btnFindPath">
 
-                <ImageView
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:layout_marginLeft="20dp"
-                    android:layout_marginTop="5dp"
-                    android:src="@drawable/ic_distance" />
+                    <AutoCompleteTextView
+                        android:id="@+id/etOrigin"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="textNoSuggestions"
+                        android:layout_alignParentStart="true"
+                        android:layout_alignParentTop="true"
+                        android:layout_weight="1"
+                        android:ellipsize="end"
+                        android:hint="Enter origin address"
+                        android:maxLines="1"
+                        android:scrollHorizontally="true" />
 
-                <TextView
-                    android:id="@+id/tvDistance"
-                    android:layout_width="wrap_content"
+                    <AutoCompleteTextView
+                        android:id="@+id/etDestination"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="textNoSuggestions"
+                        android:layout_alignParentEnd="true"
+                        android:layout_alignParentTop="true"
+                        android:layout_weight="1"
+                        android:ellipsize="end"
+                        android:hint="Enter destination adrress"
+                        android:maxLines="1"
+                        android:scrollHorizontally="true" />
+                </LinearLayout>
+
+                    <Button
+                        android:id="@+id/btnFindPath"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Find path"
+                        android:layout_centerVertical="true"
+                        android:layout_alignParentEnd="true" />
+                </RelativeLayout>
+            </android.support.v7.widget.CardView>
+
+            <android.support.v7.widget.CardView xmlns:card_view="http://schemas.android.com/apk/res-auto"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="3dp"
+                card_view:cardCornerRadius="4dp"
+                card_view:cardElevation="1dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginLeft="5dp"
-                    android:text="0 km" />
+                    android:orientation="vertical">
 
-                <ImageView
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:layout_marginLeft="20dp"
-                    android:layout_marginTop="5dp"
-                    android:padding="5dp"
-                    android:src="@drawable/ic_clock" />
 
-                <TextView
-                    android:id="@+id/tvDuration"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginLeft="5dp"
-                    android:text="0 min" />
-            </LinearLayout>
+                    <RelativeLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
 
-            <fragment
+                        <Spinner
+                            android:id="@+id/placeSpinner"
+                            android:layout_width="130dp"
+                            android:layout_height="wrap_content"
+                            android:hint="NearBy"
+                            android:layout_marginStart="11dp"
+                            android:layout_centerVertical="true"
+                            android:layout_alignParentStart="true" />
+
+                        <ImageView
+                            android:layout_width="40dp"
+                            android:layout_height="40dp"
+                            android:layout_marginLeft="20dp"
+                            android:src="@drawable/ic_distance"
+                            android:id="@+id/imageView2"
+                            android:layout_marginEnd="15dp"
+                            android:layout_alignParentTop="true"
+                            android:layout_toStartOf="@+id/tvDistance" />
+
+                        <TextView
+                            android:id="@+id/tvDistance"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginLeft="5dp"
+                            android:text="0 km"
+                            android:layout_centerVertical="true"
+                            android:layout_toStartOf="@+id/imageView"
+                            android:layout_marginEnd="13dp" />
+
+                        <ImageView
+                            android:layout_width="40dp"
+                            android:layout_height="40dp"
+                            android:layout_marginLeft="20dp"
+                            android:padding="5dp"
+                            android:src="@drawable/ic_clock"
+                            android:id="@+id/imageView"
+                            android:layout_alignParentTop="true"
+                            android:layout_toStartOf="@+id/tvDuration"
+                            android:layout_marginEnd="15dp" />
+
+                        <TextView
+                            android:id="@+id/tvDuration"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginLeft="5dp"
+                            android:text="0 min"
+                            android:layout_marginEnd="10dp"
+                            android:layout_centerVertical="true"
+                            android:layout_alignParentEnd="true" />
+                    </RelativeLayout>
+                </LinearLayout>
+            </android.support.v7.widget.CardView>
+            <android.support.design.widget.CoordinatorLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+                <fragment
                 android:id="@+id/map"
                 android:name="com.google.android.gms.maps.SupportMapFragment"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent" />
+
+                <android.support.design.widget.FloatingActionButton
+                    android:id="@+id/direct"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical|center_horizontal"
+                    android:clickable="true"
+                    map:backgroundTint="#38447F"
+                    map:fabSize="normal"
+                    map:srcCompat="@drawable/direction"
+                    sothree:layout_anchor="@+id/map"
+                    sothree:layout_anchorGravity="bottom|right" />
+
+            </android.support.design.widget.CoordinatorLayout>
         </LinearLayout>
 
+        <android.support.v7.widget.CardView xmlns:card_view="http://schemas.android.com/apk/res-auto"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="3dp"
+            card_view:cardCornerRadius="4dp"
+            card_view:cardElevation="1dp">
         <LinearLayout
             android:id="@+id/list"
             android:layout_width="match_parent"
@@ -118,7 +188,9 @@
                 android:layout_height="wrap_content"
                 android:paddingLeft="8dp"
                 android:paddingRight="8dp"
-                android:scrollbars="vertical" />
+                android:scrollbars="none"/>
         </LinearLayout>
+        </android.support.v7.widget.CardView>
     </com.sothree.slidinguppanel.SlidingUpPanelLayout>
+
 </LinearLayout>
